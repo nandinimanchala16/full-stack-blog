@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MyBlog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset & Variables ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:   #faf7f2;
+      --white:   #ffffff;
+      --ink:     #1a1a2e;
+      --muted:   #6b6b7e;
+      --border:  #e8e4de;
+      --accent:  #c0392b;
+      --accent2: #e8a87c;
+      --green:   #27ae60;
+      --radius:  8px;
+      --shadow:  0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
+
+    /* ── Navbar ── */
+    nav {
+      background: var(--white);
+      border-bottom: 2px solid var(--ink);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--accent);
+      cursor: pointer;
+      background: none; border: none;
+    }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-user {
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: #f3f0ea;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.88rem; font-weight: 600;
+      padding: 8px 18px;
+      border-radius: var(--radius);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-red   { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-red:hover { background: #a93226; border-color: #a93226; }
+    .btn-outline { background: transparent; border-color: var(--ink); color: var(--ink); }
+    .btn-outline:hover { background: var(--ink); color: #fff; }
+    .btn-ghost { background: transparent; border: none; color: var(--muted); font-size: 0.82rem; cursor: pointer; }
+    .btn-ghost:hover { color: var(--accent); }
+    .btn-green { background: var(--green); color: #fff; border-color: var(--green); }
+    .btn-green:hover { background: #219a52; }
+    .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+
+    /* ── Page container ── */
+    .page { display: none; }
+    .page.active { display: block; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Auth Pages ── */
+    .auth-wrap {
+      min-height: calc(100vh - 60px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px 20px;
+    }
+    .auth-box {
+      background: var(--white);
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%; max-width: 420px;
+      box-shadow: 6px 6px 0 var(--ink);
+    }
+    .auth-box h2 { font-size: 1.8rem; margin-bottom: 6px; }
+    .auth-box p  { color: var(--muted); font-size: 0.92rem; margin-bottom: 28px; }
+
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; letter-spacing: 0.03em; }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.95rem;
+      background: #fdfcfa;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--ink); }
+    .field textarea { resize: vertical; min-height: 140px; }
+
+    .auth-full { width: 100%; padding: 12px; font-size: 0.95rem; margin-top: 4px; }
+    .auth-switch { text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--muted); }
+    .auth-switch button { background: none; border: none; color: var(--accent); font-weight: 600; cursor: pointer; }
+
+    .error-msg { background: #fdecea; border: 1px solid #e74c3c; color: #c0392b; padding: 10px 14px; border-radius: 6px; font-size: 0.87rem; margin-bottom: 16px; display: none; }
+    .error-msg.show { display: block; }
+
+    /* ── Home Page ── */
+    .home-hero {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 50px 24px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .home-hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 10px; }
+    .home-hero p  { color: #aaa; font-size: 1rem; margin-bottom: 24px; }
+    .search-bar {
+      max-width: 400px; margin: 0 auto;
+      padding: 10px 18px;
+      border: none; border-radius: 50px;
+      font-size: 0.95rem; width: 100%;
+      font-family: 'Source Sans 3', sans-serif;
+    }
+    .search-bar:focus { outline: 2px solid var(--accent2); }
+
+    .posts-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .posts-header h3 { font-size: 1.2rem; }
+    .post-count { font-size: 0.82rem; color: var(--muted); }
+
+    .posts-list { display: flex; flex-direction: column; gap: 1px; margin-bottom: 40px; }
+
+    .post-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .post-card:first-child { border-radius: 8px 8px 0 0; }
+    .post-card:last-child  { border-radius: 0 0 8px 8px; }
+    .post-card:only-child  { border-radius: 8px; }
+    .post-card:hover { background: #fff9f5; border-left: 4px solid var(--accent); padding-left: 20px; }
+
+    .post-cat {
+      display: inline-block;
+      font-size: 0.7rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--accent); background: #fdecea;
+      padding: 2px 8px; border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .post-card h3 { font-size: 1.15rem; margin-bottom: 8px; line-height: 1.4; }
+    .post-excerpt { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 12px; }
+    .post-meta { display: flex; gap: 16px; font-size: 0.78rem; color: var(--muted); }
+    .post-meta span::before { margin-right: 4px; }
+
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      color: var(--muted);
+      background: var(--white); border: 2px dashed var(--border);
+      border-radius: 12px;
+    }
+    .empty-state p { font-size: 1rem; margin-top: 12px; }
+
+    /* ── Post Detail Page ── */
+    .post-detail { max-width: 720px; margin: 0 auto; padding: 40px 20px; }
+    .back-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; font-family: 'Source Sans 3', sans-serif; }
+    .back-btn:hover { color: var(--ink); }
+
+    .post-detail-cat { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 12px; }
+    .post-detail h2  { font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.3; margin-bottom: 16px; }
+    .post-detail-meta { display: flex; gap: 20px; font-size: 0.82rem; color: var(--muted); padding-bottom: 24px; border-bottom: 2px solid var(--border); margin-bottom: 28px; }
+
+    .post-detail-body { font-size: 1.05rem; line-height: 1.85; color: #2c2c3e; }
+    .post-detail-body p { margin-bottom: 16px; }
+
+    .detail-actions { display: flex; gap: 10px; margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border); }
+
+    /* ── Write / Edit Post Page ── */
+    .write-page { max-width: 700px; margin: 0 auto; padding: 40px 20px; }
+    .write-page h2 { font-size: 1.8rem; margin-bottom: 6px; }
+    .write-page > p { color: var(--muted); font-size: 0.9rem; margin-bottom: 30px; }
+    .write-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+
+    /* ── Edit inline ── */
+    .edit-section {
+      background: #fff9f5;
+      border: 2px solid var(--accent2);
+      border-radius: 10px;
+      padding: 24px;
+      margin-top: 28px;
+    }
+    .edit-section h4 { margin-bottom: 16px; font-size: 1.1rem; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--cream); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════ NAVBAR ══════ -->
+<nav>
+  <button class="nav-logo" onclick="showPage('home')">✍️ MyBlog</button>
+  <div class="nav-right" id="navRight">
+    <!-- filled by JS -->
+  </div>
+</nav>
+
+<!-- ══════ HOME PAGE ══════ -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <h1>MyBlog</h1>
+    <p>Stories, ideas, and insights from our community</p>
+    <input class="search-bar" type="text" id="searchInput" placeholder="🔍 Search posts…" oninput="renderPosts()"/>
+  </div>
+  <div class="container">
+    <div class="posts-header">
+      <h3>Latest Posts</h3>
+      <span class="post-count" id="postCount"></span>
+    </div>
+    <div class="posts-list" id="postsList"></div>
+  </div>
+</div>
+
+<!-- ══════ LOGIN PAGE ══════ -->
+<div class="page" id="page-login">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <h2>Welcome back 👋</h2>
+      <p>Sign in to write and manage your posts</p>
+      <div class="error-msg" id="loginError"></div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="loginUsername" placeholder="Enter your username"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter your password" onkeydown="if(event.key==='Enter') doLogin()"/>
+      </div>
+      <button class="btn btn-red auth-full" onclick="doLogin()">Sign In</button>
+      <div class="auth-switch">
+        Don't have an account? <button onclick="showPage('register')">Register</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ REGISTER PAGE ══════ -->
+<div class="page" id="page-register">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <h2>Create account 🚀</h2>
+      <p>Join MyBlog and start sharing your stories</p>
+      <div class="error-msg" id="regError"></div>
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="regUsername" placeholder="Choose a username (min 3 chars)"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Choose a password (min 6 chars)"/>
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="regConfirm" placeholder="Repeat your password" onkeydown="if(event.key==='Enter') doRegister()"/>
+      </div>
+      <button class="btn btn-red auth-full" onclick="doRegister()">Create Account</button>
+      <div class="auth-switch">
+        Already have an account? <button onclick="showPage('login')">Sign In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ WRITE POST PAGE ══════ -->
+<div class="page" id="page-write">
+  <div class="write-page">
+    <h2>✍️ Write a New Post</h2>
+    <p>Share your story with the world</p>
+    <div class="field">
+      <label>Title *</label>
+      <input type="text" id="writeTitle" placeholder="Give your post a compelling title…"/>
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <select id="writeCategory">
+        <option>General</option>
+        <option>Technology</option>
+        <option>Travel</option>
+        <option>Food</option>
+        <option>Health</option>
+        <option>Education</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Content *</label>
+      <textarea id="writeContent" rows="10" placeholder="Write your post content here…"></textarea>
+    </div>
+    <div class="write-actions">
+      <button class="btn btn-outline" onclick="showPage('home')">Cancel</button>
+      <button class="btn btn-red" onclick="publishPost()">🚀 Publish Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ POST DETAIL PAGE ══════ -->
+<div class="page" id="page-detail">
+  <div class="post-detail">
+    <button class="back-btn" onclick="showPage('home')">← Back to all posts</button>
+    <div class="post-detail-cat" id="detailCat"></div>
+    <h2 id="detailTitle"></h2>
+    <div class="post-detail-meta">
+      <span id="detailAuthor"></span>
+      <span id="detailDate"></span>
+    </div>
+    <div class="post-detail-body" id="detailBody"></div>
+
+    <!-- Author-only actions -->
+    <div class="detail-actions" id="detailActions" style="display:none">
+      <button class="btn btn-outline btn-sm" onclick="startEdit()">✏️ Edit</button>
+      <button class="btn btn-sm" style="background:#e74c3c;color:#fff;border-color:#e74c3c" onclick="deletePost()">🗑 Delete</button>
+    </div>
+
+    <!-- Edit section (hidden by default) -->
+    <div class="edit-section" id="editSection" style="display:none">
+      <h4>✏️ Edit Post</h4>
+      <div class="field">
+        <label>Title</label>
+        <input type="text" id="editTitle"/>
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="editCategory">
+          <option>General</option>
+          <option>Technology</option>
+          <option>Travel</option>
+          <option>Food</option>
+          <option>Health</option>
+          <option>Education</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Content</label>
+        <textarea id="editContent" rows="8"></textarea>
+      </div>
+      <div class="write-actions">
+        <button class="btn btn-ghost" onclick="cancelEdit()">Cancel</button>
+        <button class="btn btn-green" onclick="saveEdit()">💾 Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA HELPERS — localStorage as our "database"
+// ═══════════════════════════════════════════════
+
+// Get all users from storage (array of {username, password})
+function getUsers() {
+  return JSON.parse(localStorage.getItem('blog_users') || '[]');
+}
+
+// Save users array to storage
+function saveUsers(users) {
+  localStorage.setItem('blog_users', JSON.stringify(users));
+}
+
+// Get all posts from storage (array of post objects)
+function getPosts() {
+  return JSON.parse(localStorage.getItem('blog_posts') || '[]');
+}
+
+// Save posts array to storage
+function savePosts(posts) {
+  localStorage.setItem('blog_posts', JSON.stringify(posts));
+}
+
+// Get currently logged-in username (or null)
+function getCurrentUser() {
+  return localStorage.getItem('blog_current_user');
+}
+
+// Log a user in by saving their username
+function setCurrentUser(username) {
+  localStorage.setItem('blog_current_user', username);
+}
+
+// Log out
+function logoutUser() {
+  localStorage.removeItem('blog_current_user');
+}
+
+// Generate a simple unique ID for posts
+function makeId() {
+  return Date.now().toString() + Math.random().toString(36).slice(2, 7);
+}
+
+// Format a date string nicely
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+}
+
+
+// ═══════════════════════════════════════════════
+//  NAVIGATION — show/hide pages
+// ═══════════════════════════════════════════════
+
+let currentDetailId = null; // which post is open in detail view
+
+function showPage(name) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Show the requested page
+  document.getElementById('page-' + name).classList.add('active');
+
+  // Clear form errors when switching pages
+  document.querySelectorAll('.error-msg').forEach(e => e.classList.remove('show'));
+
+  // Refresh dynamic content
+  updateNavbar();
+  if (name === 'home') renderPosts();
+  if (name === 'write') {
+    // Check if user is logged in before allowing write
+    if (!getCurrentUser()) {
+      alert('Please log in to write a post.');
+      showPage('login');
+      return;
+    }
+    // Clear the write form
+    document.getElementById('writeTitle').value = '';
+    document.getElementById('writeContent').value = '';
+    document.getElementById('writeCategory').value = 'General';
+  }
+  window.scrollTo(0, 0);
+}
+
+
+// ═══════════════════════════════════════════════
+//  NAVBAR — update based on login state
+// ═══════════════════════════════════════════════
+
+function updateNavbar() {
+  const user = getCurrentUser();
+  const nav  = document.getElementById('navRight');
+
+  if (user) {
+    // Logged in: show username, write button, logout
+    nav.innerHTML = `
+      <span class="nav-user">👤 ${user}</span>
+      <button class="btn btn-outline btn-sm" onclick="showPage('write')">+ Write</button>
+      <button class="btn btn-ghost" onclick="doLogout()">Logout</button>
+    `;
+  } else {
+    // Not logged in: show login/register buttons
+    nav.innerHTML = `
+      <button class="btn btn-outline btn-sm" onclick="showPage('login')">Login</button>
+      <button class="btn btn-red btn-sm" onclick="showPage('register')">Register</button>
+    `;
+  }
+}
+
+
+// ═══════════════════════════════════════════════
+//  AUTH — Register, Login, Logout
+// ═══════════════════════════════════════════════
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function doRegister() {
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm  = document.getElementById('regConfirm').value;
+
+  // Validation — check each rule and show an error if it fails
+  if (!username || !password || !confirm) {
+    return showError('regError', 'Please fill in all fields.');
+  }
+  if (username.length < 3) {
+    return showError('regError', 'Username must be at least 3 characters.');
+  }
+  if (password.length < 6) {
+    return showError('regError', 'Password must be at least 6 characters.');
+  }
+  if (password !== confirm) {
+    return showError('regError', 'Passwords do not match.');
+  }
+
+  // Check if username already taken
+  const users = getUsers();
+  const alreadyExists = users.find(u => u.username === username);
+  if (alreadyExists) {
+    return showError('regError', 'That username is already taken. Choose another.');
+  }
+
+  // Save the new user
+  users.push({ username, password });
+  saveUsers(users);
+
+  // Automatically log them in
+  setCurrentUser(username);
+
+  // Go to home
+  showPage('home');
+}
+
+function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!username || !password) {
+    return showError('loginError', 'Please enter your username and password.');
+  }
+
+  // Find the user
+  const users = getUsers();
+  const user  = users.find(u => u.username === username && u.password === password);
+
+  if (!user) {
+    return showError('loginError', 'Incorrect username or password. Try again.');
+  }
+
+  // Log them in and go home
+  setCurrentUser(username);
+  showPage('home');
+}
+
+function doLogout() {
+  logoutUser();
+  showPage('home');
+}
+
+
+// ═══════════════════════════════════════════════
+//  POSTS — Create, Read, Update, Delete
+// ═══════════════════════════════════════════════
+
+// RENDER all posts on the home page
+function renderPosts() {
+  const posts     = getPosts();
+  const query     = document.getElementById('searchInput').value.toLowerCase();
+  const container = document.getElementById('postsList');
+  const countEl   = document.getElementById('postCount');
+
+  // Filter by search query
+  const filtered = posts.filter(p =>
+    p.title.toLowe
